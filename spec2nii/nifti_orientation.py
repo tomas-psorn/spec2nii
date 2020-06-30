@@ -1,8 +1,11 @@
 import numpy as np
-from spec2nii.dcm2niiOrientation.orientationFuncs import nifti_mat44_to_quatern
+# from spec2nii.dcm2niiOrientation.orientationFuncs import nifti_mat44_to_quatern
 from scipy.spatial.transform import Rotation
+
+
 class NIFTIOrient:
-    def __init__(self,affine):        
+    def __init__(self,affine):
+        from dcm2niiOrientation.orientationFuncs import nifti_mat44_to_quatern
         self.Q44 = affine   
         qb,qc,qd,qx,qy,qz,dx,dy,dz,qfac = nifti_mat44_to_quatern(affine)
         self.qb = qb

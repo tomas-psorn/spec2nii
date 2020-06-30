@@ -22,12 +22,18 @@ Copyright (C) 2020 University of Oxford
 import argparse
 import sys
 import numpy as np
-from spec2nii.writeNii import writeNii
-from spec2nii.writeJSON import writeJSON
+from writeNii import writeNii
+from writeJSON import writeJSON
 import os.path as op
 from pathlib import Path
+<<<<<<< HEAD
 from spec2nii.dcm2niiOrientation.orientationFuncs import nifti_dicom2mat
 from spec2nii.nifti_orientation import NIFTIOrient
+=======
+from os import walk
+from dcm2niiOrientation.orientationFuncs import nifti_dicom2mat
+from nifti_orientation import NIFTIOrient
+>>>>>>> first version of Bruker svs and mrsi
 # There are case specific imports below
 
 
@@ -109,7 +115,15 @@ class spec2nii:
         parser_raw.add_argument("-o", "--outdir", type=str,help="Output location (default = .)",default='.')        
         parser_raw.set_defaults(func=self.raw)
 
-        parser.add_argument('--verbose',action='store_true')        
+        parser_raw = subparsers.add_parser('bruker', help='Convert from Bruker data format.')
+        parser_raw.add_argument('file',help='file to convert',type=str)
+        parser_raw.add_argument('-j','--json',help='Create json sidecar.',action='store_true')
+        parser_raw.add_argument("-a", "--affine", type=str,help="NIfTI affine file",required=False,metavar='<file>')
+        parser_raw.add_argument("-f", "--fileout", type=str,help="Output file base name (default = input file name)")
+        parser_raw.add_argument("-o", "--outdir", type=str,help="Output location (default = .)",default='.')
+        parser_raw.set_defaults(func=self.bruker)
+
+        parser.add_argument('--verbose',action='store_true')
 
         if len(sys.argv)==1:
             parser.print_usage(sys.stderr)
@@ -482,9 +496,28 @@ class spec2nii:
         self.metaData.append(metadict)
         self.fileoutNames.append(mainStr)
 
-def main(*args):
-    spec2nii(*args)
-    return 0
+    def bruker(self, args):
+        from bruker import read_bruker
+        data, affine, dwelltime = read_bruker(args.file)
+        currNiftiOrientation = NIFTIOrient(affine)
 
-# if __name__== "__main__":
-#     spec2nii()
+        # File names
+        if args.fileout:
+            mainStr = args.fileout
+        else:
+            base=op.basename(args.file)
+            mainStr = op.splitext(base)[0]
+
+        self.imageOut.append(data)
+        self.orientationInfoOut.append(currNiftiOrientation)
+        self.dwellTimes.append(dwelltime)
+        self.fileoutNames.append(mainStr)
+
+
+
+# def main(*args):
+#     spec2nii(*args)
+#     return 0
+
+if __name__== "__main__":
+    spec2nii()
